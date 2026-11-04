@@ -60,8 +60,8 @@ function step(e,dt){if(e.delay>0){e.delay-=dt;return}
  if(dd<=s){e.x=t[0];e.y=t[1];e.p.shift();if(!e.p.length&&e.d){const f=e.d;e.d=null;f(e)}}else{e.x+=dx/dd*s;e.y+=dy/dd*s}}
 // 해당과정: 포도당 6C -> 피루브산 3C x2
 function glyOut(){fx(130,110);for(let i=0;i<2;i++){
- if(nadCy()){const a=add('pyr',130,112+i*14,[[60+R()*180,195+R()*60]],55);a.cy=1;const b=add('nadh',124+i*12,98,[[60+R()*180,195+R()*60]],55);b.cy=1}else{add('pyr',130,112+i*14,[[240,130+i*10],[300,138],[345,172],[372,250]],55,pyrD);
- add('nadh',124+i*12,98,[[250,235],[360,238],[400,195],[400,178]],55,nadhD).g=1}
+ if(anox()){const a=add('pyr',130,112+i*14,[[60+R()*180,195+R()*60]],55);a.cy=1}else add('pyr',130,112+i*14,[[240,130+i*10],[300,138],[345,172],[372,250]],55,pyrD);
+ if(nadCy()){const b=add('nadh',124+i*12,98,[[60+R()*180,195+R()*60]],55);b.cy=1}else add('nadh',124+i*12,98,[[250,235],[360,238],[400,195],[400,178]],55,nadhD).g=1;
  add('atp',130,100,[[250,12],[930,16]],110,atpD)}}
 // 피루브산 산화: 3C -> 2C(아세틸) + CO2
 function pyrD(e){if(!V.pdh||st.nad<1||anox()){e.pw=1;return}st.nad-=1;e.pw=0;e.k='ace';add('co2',e.x,e.y,[[e.x,-10]],45,kill);add('nadh',e.x+10,e.y,[[400,230],[400,178]],55,nadhD);e.p=[[430,300]];e.d=a=>{a.w=1}}
@@ -116,8 +116,8 @@ function update(dt){
  if(st.over)return;if(st.bt>0)st.bt-=dt;tip('s0','점선 칸을 눌러 시설을 설치하고, 위쪽 버튼으로 포도당을 사 넣어 보세요!');if(nhc()>=8)tip('jam','NADH가 가득 차면 NAD⁺가 모자라 반응이 멈춰요.');ang+=dt;stuckTick(dt);progTick();if(st.coin<4)tip('low','코인이 거의 없어요! 포도당(2코인)을 사 넣어 ATP를 만들고, 의뢰를 납품해 코인을 벌어요.');spT-=dt;st.T+=dt;ordTick(dt);hypTick(dt);
  if(A.g&&on.g&&st.sh<=0&&st.glu<1&&E.filter(e=>e.k=='glu'&&!e.use).length<1&&st.coin>=2){st.coin-=2;st.glu++}
  if(A.o&&on.o&&st.hyp<=0&&st.o2+st.pend<5&&st.coin>=3){st.coin-=3;buyO2(5,5)}
- if(!nadCy()){for(const e of E)if(e.cy&&!e.use&&(e.k=='pyr'||e.k=='nadh')){e.cy=0;if(e.k=='pyr'){e.p=[[300,138],[345,172],[372,250]];e.d=pyrD}else{e.g=1;e.p=[[250,235],[360,238],[400,195],[400,178]];e.d=nadhD}}}
- if(V.ferm&&nadCy()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&e.cy&&!e.use),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=q=>{q.k='nad';fx(150,335);q.p=[[130,140]];q.d=r=>{st.nad++;r.dead=1}};p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
+ for(const e of E)if(e.cy&&!e.use&&((e.k=='pyr'&&!anox())||(e.k=='nadh'&&!nadCy()))){e.cy=0;if(e.k=='pyr'){e.p=[[300,138],[345,172],[372,250]];e.d=pyrD}else{e.g=1;e.p=[[250,235],[360,238],[400,195],[400,178]];e.d=nadhD}}
+ if(V.ferm&&nadCy()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&!e.use&&e.x<290),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=q=>{q.k='nad';fx(150,335);q.p=[[130,140]];q.d=r=>{st.nad++;r.dead=1}};p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
  if(spT<=0&&st.glu>=1&&E.filter(e=>e.k=='glu'&&!e.use).length<3){st.glu--;spT=1.5;add('glu',0,110,[[120,110]],60,e=>{e.arr=1})}
  if(gly.t>0){gly.t-=dt;if(gly.t<=0){gly.u.dead=1;glyOut()}}
  else{const u=E.find(e=>e.k=='glu'&&e.arr&&!e.use);if(u&&V.glyc&&!glyBlk()){u.use=1;gly.u=u;gly.t=1.5/V.glyc;st.nad-=2}}
