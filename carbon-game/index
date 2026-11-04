@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <title>탄소 6을 만들어라!</title>
+  <style>
+    :root { color-scheme: light; --ink:#203047; --muted:#657387; --line:#d9e2eb; --tile:#fff; --board:#eaf0f7; --orange:#f6cc84; --orange-border:#d68b20; --blue:#e2efff; --accent:#2362b0; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; min-height:100%; width:100%; overflow-x:hidden; }
+    body { font-family:system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif; background:#f7f8fc; color:var(--ink); }
+    .app { width:100%; max-width:620px; margin:0 auto; padding:14px 10px max(22px,env(safe-area-inset-bottom)); }
+    header { display:grid; grid-template-columns: minmax(62px,1fr) minmax(0,2.3fr) minmax(62px,1fr); gap:6px; align-items:center; margin-bottom:12px; }
+    h1 { text-align:center; margin:0; font-size:clamp(16px,4.5vw,24px); line-height:1.2; letter-spacing:-.055em; word-break:keep-all; }
+    .stat { background:white; border:1px solid var(--line); border-radius:11px; padding:7px 8px; min-width:0; }
+    .stat:last-child { text-align:right; }
+    .stat .label { display:block; font-size:10px; color:var(--muted); font-weight:700; letter-spacing:.03em; }
+    .stat .value { display:block; font-size:clamp(20px,5.2vw,27px); line-height:1.3; font-weight:850; font-variant-numeric:tabular-nums; }
+    .timer-bar { height:5px; background:#dce5ee; border-radius:100px; overflow:hidden; margin-bottom:10px; }
+    .timer-bar>div { height:100%; width:100%; background:var(--accent); transition:width .15s linear; }
+    .board { width:100%; display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:3px; padding:5px; background:var(--board); border:1px solid var(--line); border-radius:12px; touch-action:none; user-select:none; -webkit-user-select:none; cursor:crosshair; }
+    .tile { min-width:0; width:100%; aspect-ratio:1.23; border-radius:5px; background:var(--tile); border:1px solid #d1dce7; display:flex; align-items:center; justify-content:center; padding:1px; text-align:center; white-space:pre-line; color:var(--ink); font-size:clamp(12px,3.7vw,19px); font-weight:800; line-height:1.08; letter-spacing:-.06em; pointer-events:none; overflow:hidden; }
+    .tile.long { font-size:clamp(11px,3.25vw,17px); }
+    .tile.co2 { background:var(--blue); }
+    .tile.empty { background:transparent; border-color:transparent; }
+    .tile.selected { background:var(--orange); border-color:var(--orange-border); }
+    .actions { display:flex; justify-content:center; gap:9px; margin:13px 0 7px; }
+    button { appearance:none; -webkit-appearance:none; cursor:pointer; border-radius:10px; border:1px solid var(--line); background:#fff; color:var(--ink); font:inherit; font-size:14px; font-weight:750; padding:11px 14px; min-width:0; }
+    button.primary { background:var(--accent); color:white; border-color:var(--accent); }
+    button:focus-visible { outline:3px solid #8aaff1; outline-offset:2px; }
+    .status { min-height:18px; text-align:center; font-size:12px; color:var(--muted); }
+    .overlay { position:absolute; inset:5px; z-index:3; background:rgba(255,255,255,.96); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:13px; border-radius:9px; text-align:center; padding:14px; }
+    .overlay h2 { font-size:clamp(24px,6vw,34px); margin:0; }
+    .overlay p { font-size:16px; margin:0; }
+    .board-wrap { position:relative; }
+    @media (max-width:360px) { .app{padding-left:6px;padding-right:6px;} .board{gap:2px;padding:3px;} .tile{font-size:clamp(11px,3.6vw,16px)} .tile.long{font-size:clamp(10px,3.1vw,14px)} .actions{gap:6px} button{padding:10px 11px;font-size:13px;} }
+    @media (min-width:620px) { .tile{font-size:19px;} .tile.long{font-size:17px;} }
+  </style>
+</head>
+<body>
+<main class="app">
+  <header>
+    <div class="stat"><span class="label">SCORE</span><span class="value" id="score">0</span></div>
+    <h1>탄소 6을<br>만들어라!</h1>
+    <div class="stat"><span class="label">TIME</span><span class="value" id="time">90</span></div>
+  </header>
+  <div class="timer-bar" aria-hidden="true"><div id="bar"></div></div>
+  <div class="board-wrap"><div class="board" id="board" aria-label="탄소 6 게임판"></div></div>
+  <nav class="actions" aria-label="게임 조작">
+    <button id="start" class="primary">게임 시작</button>
+    <button id="shuffle">새 배열</button>
+    <button id="reset">다시 시작</button>
+  </nav>
+  <div class="status" id="status" aria-live="polite"></div>
+</main>
+<script>
+(() => {
+  'use strict';
+  const COLS=6, ROWS=12, SECONDS=90;
+  const TYPES=[
+    { label:'CO₂', carbon:1, count:27, cls:'co2' },
+    { label:'아세틸\nCoA', carbon:2, count:9, cls:'long' },
+    { label:'에탄올', carbon:2, count:7 },
+    { label:'피루브산', carbon:3, count:9, cls:'long' },
+    { label:'젖산', carbon:3, count:7 },
+    { label:'옥살아\n세트산', carbon:4, count:7, cls:'long' },
+    { label:'포도당', carbon:6, count:3 },
+    { label:'시트르산', carbon:6, count:3, cls:'long' }
+  ];
+  if(TYPES.reduce((a,t)=>a+t.count,0)!==COLS*ROWS) throw Error('분자 개수가 게임판 칸 수와 다릅니다.');
+  const board=document.getElementById('board');
+  const scoreEl=document.getElementById('score');
+  const timeEl=document.getElementById('time');
+  const bar=document.getElementById('bar');
+  const startBtn=document.getElementById('start');
+  const status=document.getElementById('status');
+  let cells=[], score=0, time=SECONDS, running=false, finished=false;
+  let dragging=false, activePointer=null, anchor=0, endIndex=0, selected=[], interval=null, deadline=0;
+  function newBoard(){
+    const arr=[];
+    TYPES.forEach((t,i)=>{for(let n=0;n<t.count;n++)arr.push(i);});
+    for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+    return arr;
+  }
+  function rectangle(a,b){
+    const r0=Math.min(Math.floor(a/COLS),Math.floor(b/COLS));
+    const r1=Math.max(Math.floor(a/COLS),Math.floor(b/COLS));
+    const c0=Math.min(a%COLS,b%COLS),c1=Math.max(a%COLS,b%COLS);
+    const ids=[];
+    for(let r=r0;r<=r1;r++)for(let c=c0;c<=c1;c++)ids.push(r*COLS+c);
+    return ids;
+  }
+  function draw(){
+    const fragment=document.createDocumentFragment();
+    const selectedSet=new Set(selected);
+    cells.forEach((id,i)=>{
+      const el=document.createElement('div');el.className='tile';
+      if(id===null){el.classList.add('empty');}
+      else{el.textContent=TYPES[id].label;if(TYPES[id].cls)el.classList.add(TYPES[id].cls);}
+      if(selectedSet.has(i))el.classList.add('selected');
+      fragment.append(el);
+    });
+    board.replaceChildren(fragment);
+    scoreEl.textContent=String(score);
+    timeEl.textContent=String(time);
+    bar.style.width=(100*time/SECONDS)+'%';
+  }
+  function indexAt(e){
+    const rect=board.getBoundingClientRect();const style=getComputedStyle(board);
+    const px=parseFloat(style.paddingLeft)||0,py=parseFloat(style.paddingTop)||0;
+    const gapX=parseFloat(style.columnGap)||0,gapY=parseFloat(style.rowGap)||0;
+    const w=(rect.width-2*px-gapX*(COLS-1))/COLS;
+    const h=(rect.height-2*py-gapY*(ROWS-1))/ROWS;
+    const x=e.clientX-rect.left-px,y=e.clientY-rect.top-py;
+    const col=Math.max(0,Math.min(COLS-1,Math.floor(x/(w+gapX))));
+    const row=Math.max(0,Math.min(ROWS-1,Math.floor(y/(h+gapY))));
+    return row*COLS+col;
+  }
+  function tick(){
+    if(!running||finished)return;
+    time=Math.max(0,Math.ceil((deadline-Date.now())/1000));
+    timeEl.textContent=String(time);
+    bar.style.width=(100*time/SECONDS)+'%';
+    if(time===0)finish(false);
+  }
+  function start(){
+    if(running||finished)return;
+    running=true;deadline=Date.now()+time*1000;
+    startBtn.textContent='진행 중';
+    clearInterval(interval);interval=setInterval(tick,100);
+  }
+  function finish(won){
+    if(finished)return;
+    clearInterval(interval);finished=true;running=false;dragging=false;activePointer=null;selected=[];draw();
+    const overlay=document.createElement('div');overlay.className='overlay';
+    const h=document.createElement('h2');h.textContent=won?'모두 제거 성공!':'시간 종료!';
+    const p=document.createElement('p');p.textContent=`최종 점수 ${score}점`;
+    const b=document.createElement('button');b.className='primary';b.textContent='다시 도전하기';b.addEventListener('click',reset);
+    overlay.append(h,p,b);board.parentElement.append(overlay);
+    startBtn.textContent='게임 종료';status.textContent='';
+  }
+  function reset(){
+    clearInterval(interval);
+    board.parentElement.querySelector('.overlay')?.remove();
+    cells=newBoard();score=0;time=SECONDS;running=false;finished=false;dragging=false;activePointer=null;selected=[];
+    startBtn.textContent='게임 시작';status.textContent='';draw();
+  }
+  board.addEventListener('pointerdown',e=>{
+    if(finished||(e.pointerType==='mouse'&&e.button!==0))return;
+    e.preventDefault();if(!running)start();
+    dragging=true;activePointer=e.pointerId;anchor=indexAt(e);endIndex=anchor;
+    selected=rectangle(anchor,endIndex);
+    board.setPointerCapture(e.pointerId);draw();
+  });
+  board.addEventListener('pointermove',e=>{
+    if(!dragging||e.pointerId!==activePointer)return;
+    const next=indexAt(e);if(next===endIndex)return;
+    endIndex=next;selected=rectangle(anchor,endIndex);draw();
+  });
+  board.addEventListener('pointerup',e=>{
+    if(!dragging||e.pointerId!==activePointer)return;
+    dragging=false;activePointer=null;
+    // 정답 여부는 손가락/마우스를 놓을 때만 확인한다.
+    const carbonTotal=selected.reduce((n,i)=>n+(cells[i]===null?0:TYPES[cells[i]].carbon),0);
+    if(carbonTotal===6){
+      for(const i of selected){if(cells[i]!==null){cells[i]=null;score++;}}
+    }
+    selected=[];draw();
+    if(cells.every(v=>v===null))finish(true);
+  });
+  board.addEventListener('pointercancel',()=>{dragging=false;activePointer=null;selected=[];draw();});
+  startBtn.addEventListener('click',()=>{if(finished)reset();else start();});
+  document.getElementById('reset').addEventListener('click',reset);
+  document.getElementById('shuffle').addEventListener('click',()=>{
+    if(finished)return;
+    cells=newBoard();dragging=false;activePointer=null;selected=[];draw();
+  });
+  reset();
+})();
+</script>
+</body>
+</html>
