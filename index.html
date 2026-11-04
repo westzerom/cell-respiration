@@ -33,7 +33,7 @@ canvas{background:#000;image-rendering:pixelated}
 <div id="hud"></div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),g=cv.getContext('2d'),R=Math.random;
-let E=[],st={glu:0,o2:40,atp:0,coin:150,sp:1,T:0,pros:0,ord:[],oid:0,no:5,sl:1,pk:0,sg:0,la:0,gt:0,bt:0,bm:'',sd:{},h1:0,cn:0,un:0,sh:0,hyp:0,nh:-1,fk:'젖산',fer:0,sv:0},gly={t:0},tca={t:0},syn={t:0,tot:0,c:0,a:0},spT=0,ang=0,last=0;
+let E=[],st={glu:0,o2:40,atp:0,coin:150,sp:1,T:0,pros:0,ord:[],oid:0,no:5,sl:1,pk:0,sg:0,la:0,gt:0,bt:0,bm:'',sd:{},h1:0,cn:0,un:0,sh:0,hyp:0,nh:-1,fk:'젖산',fer:0,sv:0,nad:6,pend:0},gly={t:0},tca={t:0},syn={t:0,tot:0,c:0,a:0},spT=0,ang=0,last=0;
 const RC=[500,310],F='11px DotGothic16,monospace';
 const V={glyc:0,pdh:0,tca:0,c1:0,c2:0,q:0,c3:0,cc:0,c4:0,syn:0,ferm:0};let sel=null;
 const SL={
@@ -73,7 +73,7 @@ function tcaOut(){fx(RC[0],RC[1]);
 const SX={syn:820},SUC=[40,70,110,160];
 function tgtX(x){let b=820,d=1e9;for(const k in SX)if(V[k]&&Math.abs(SX[k]-x)<d){d=Math.abs(SX[k]-x);b=SX[k]}return b}
 const anox=()=>st.o2<=0||st.cn>0;
-const glyBlk=()=>anox()?E.filter(e=>e.k=='nadh'&&e.cy).length>=6:nhc()>=10;
+const glyBlk=()=>anox()?st.nad<2:nhc()>=10;
 const nhc=()=>E.filter(e=>e.k=='nadh'||e.k=='fadh').length;
 const blocked=()=>E.filter(e=>e.k=='e'&&((e.w&&anox())||e.fw)).length>=2;
 function nadhD(e){e.hold=1;e.x+=R()*30-15;e.y+=R()*36}
@@ -101,23 +101,25 @@ function progTick(){const CT=Object.keys(SL).length*3,p=Math.max((st.coin-150)/3
  const m=Math.floor(st.T/60)+'분 '+Math.floor(st.T%60)+'초';
  if(st.coin>=500)endGame('엔딩 ① 부자 공장!','코인 500개를 모았어요!',m);else if(codi()>=CT)endGame('엔딩 ② 코디 완성!','모든 시설을 설치하고 꾸미기를 마쳤어요!',m)}
 function endGame(h,d,m){st.over=1;$('endh').textContent=h;$('endt').textContent=d+' 걸린 시간: '+m;$('end').classList.add('on')}
+function buyO2(n,u){st.pend+=u;for(let i=0;i<n;i++){const e=add('o2',668+i*12,-10-i*16,[[684+i*3-6,60],[684,150]],110,o=>{st.o2+=u/n;st.pend-=u/n;o.dead=1});e.full=1}}
 function stuckTick(dt){if(E.some(e=>e.k=='atp'))st.la=st.T;
  const bad=st.coin<2&&st.glu<1&&st.sh<=0&&!E.some(e=>e.k=='glu'||e.k=='atp')&&st.atp<16,idle=st.T-st.la;
  if(bad&&idle>6)tip('stuck','코인이 바닥났어요! 이대로 ATP를 못 만들면 공장이 멈춰요.');
  if(bad&&idle>12){st.gt+=dt;if(st.gt>3){st.over=1;$('got').textContent='걸린 시간 '+Math.floor(st.T/60)+'분 '+Math.floor(st.T%60)+'초 · 진행도 '+Math.floor(st.pros)+'%. 코인이 바닥나서 포도당을 살 수 없고, 더 만들 ATP도 없어요.';$('go').classList.add('on')}}else st.gt=0}
 function hypTick(dt){
- if(st.hyp>0){st.hyp-=dt;if(st.hyp<=0){st.hyp=0;st.o2=st.sv;evEnd()}}
+ if(st.hyp>0){st.hyp-=dt;if(st.hyp<=0){st.hyp=0;buyO2(Math.min(8,Math.max(1,Math.round(st.sv/5))),st.sv);evEnd()}}
  for(const k of ['cn','un','sh'])if(st[k]>0){st[k]-=dt;if(st[k]<=0){st[k]=0;evEnd()}}
  if(st.hyp>0||st.cn>0||st.un>0||st.sh>0||!(V.c4&&V.syn))return;
  if(st.nh<0)st.nh=40+R()*20;st.nh-=dt;if(st.nh<=0)evStart()}
 function update(dt){
  if(st.over)return;if(st.bt>0)st.bt-=dt;tip('s0','점선 칸을 눌러 시설을 설치하고, 위쪽 버튼으로 포도당을 사 넣어 보세요!');if(nhc()>=8)tip('jam','NADH가 가득 차면 NAD⁺가 모자라 반응이 멈춰요.');ang+=dt;stuckTick(dt);progTick();if(st.coin<4)tip('low','코인이 거의 없어요! 포도당(2코인)을 사 넣어 ATP를 만들고, 의뢰를 납품해 코인을 벌어요.');spT-=dt;st.T+=dt;ordTick(dt);hypTick(dt);
  if(A.g&&on.g&&st.sh<=0&&st.glu<1&&E.filter(e=>e.k=='glu'&&!e.use).length<1&&st.coin>=2){st.coin-=2;st.glu++}
- if(A.o&&on.o&&st.hyp<=0&&st.o2<5&&st.coin>=3){st.coin-=3;st.o2+=5}
- if(V.ferm&&anox()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&e.cy&&!e.use),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=kill;p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
+ if(A.o&&on.o&&st.hyp<=0&&st.o2+st.pend<5&&st.coin>=3){st.coin-=3;buyO2(5,5)}
+ if(!anox()){st.nad=6;for(const e of E)if(e.cy&&!e.use&&(e.k=='pyr'||e.k=='nadh')){e.cy=0;if(e.k=='pyr'){e.p=[[300,138],[345,172],[372,250]];e.d=pyrD}else{e.p=[[250,235],[360,238],[400,195],[400,178]];e.d=nadhD}}}
+ if(V.ferm&&anox()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&e.cy&&!e.use),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=q=>{q.k='nad';fx(150,335);q.p=[[130,140]];q.d=r=>{st.nad=Math.min(6,st.nad+1);r.dead=1}};p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
  if(spT<=0&&st.glu>=1&&E.filter(e=>e.k=='glu'&&!e.use).length<3){st.glu--;spT=1.5;add('glu',0,110,[[120,110]],60,e=>{e.arr=1})}
  if(gly.t>0){gly.t-=dt;if(gly.t<=0){gly.u.dead=1;glyOut()}}
- else{const u=E.find(e=>e.k=='glu'&&e.arr&&!e.use);if(u&&V.glyc&&!glyBlk()){u.use=1;gly.u=u;gly.t=1.5/V.glyc}}
+ else{const u=E.find(e=>e.k=='glu'&&e.arr&&!e.use);if(u&&V.glyc&&!glyBlk()){u.use=1;gly.u=u;gly.t=1.5/V.glyc;if(anox())st.nad-=2}}
  if(tca.t>0){tca.t-=dt;if(tca.t<=0)tcaOut()}
  else{const a=E.find(e=>e.k=='ace'&&e.w&&!e.use);if(a&&V.tca&&nhc()<6){a.use=1;a.dead=1;tca.t=2/V.tca}}
  if(anox()||st.un>0){st.lk=(st.lk||0)-dt;if(st.lk<=0){st.lk=st.un>0?.25:.2;const h=E.find(e=>e.k=='hp'&&e.free);if(h)h.dead=1}}
@@ -125,7 +127,7 @@ function update(dt){
  for(const e of E)if(e.fw&&V[CH[e.i][0]]){e.fw=0;eGo(e)}
  for(const e of E)if(e.hold&&!blocked()&&(e.k=='nadh'?V.c1:V.c2)){e.hold=0;e.dead=1;if(e.k=='nadh'){H(400,4);eSp(400,'c1')}else eSp(470,'c2')}
  for(const e of E)if(e.k=='e'&&e.w&&!e.use&&st.o2>0&&!st.cn){st.o2-=.5;e.use=1;
-  add('o2',690,8,[[684,150]],70,o=>{o.dead=1;e.dead=1;H(680,2);add('h2o',684,150,[[740,70],[740,-10]],45,kill)})}
+  add('o2',690,70,[[684,150]],220,o=>{o.dead=1;e.dead=1;H(680,2);add('h2o',684,150,[[740,70],[740,-10]],45,kill)})}
  for(const k in SX){if(!V[k])continue;const X=SX[k],S=syn[k]||(syn[k]={c:0,tot:0,a:0});
   if(E.filter(e=>e.chan==k).length<2){const h=E.find(e=>e.k=='hp'&&e.free&&Math.abs(e.x-X)<16&&e.y>130);
    if(h){h.free=0;h.chan=k;h.p=[[X,168],[X,214]];h.v=160*(1+.6*(st.sl-1));h.d=q=>{q.dead=1;S.tot++;S.c++;if(S.c>=4){S.c=0;fx(X,222);add('atp',X,238,[[900,250],[925,200],[930,16]],100,atpD)}}}}}
@@ -203,9 +205,9 @@ function draw(){
  drawSlots();
  for(const e of E){const x=Math.round(e.x),y=Math.round(e.y);
   if(e.k=='glu')mol(6,x,y,'포도당 6C');else if(e.k=='pyr')mol(3,x,y,'피루브산 3C');else if(e.k=='ace')mol(2,x,y,'아세틸 2C');else if(e.k=='lac')mol(3,x,y,'젖산 3C');else if(e.k=='eth')mol(2,x,y,'에탄올 2C');
-  else if(e.k=='nadh')pill(x,y,36,'#7ae582','NADH');else if(e.k=='fadh')pill(x,y,46,'#ff9ab0','FADH₂');
+  else if(e.k=='nad')pill(x,y,36,'#9fd8ff','NAD⁺');else if(e.k=='nadh')pill(x,y,36,'#7ae582','NADH');else if(e.k=='fadh')pill(x,y,46,'#ff9ab0','FADH₂');
   else if(e.k=='co2'){pc(x,y,5,'#aaa');tx('CO₂',x+18,y+4,'#ddd')}
-  else if(e.k=='o2'){pc(x,y,4,'#7fd4ff');tl('½O₂',x,y-12,'#7fd4ff')}
+  else if(e.k=='o2'){if(e.full){pc(x-6,y,4,'#7fd4ff');pc(x+6,y,4,'#7fd4ff');tl('O₂',x,y-12,'#7fd4ff')}else{pc(x,y,4,'#7fd4ff');tl('½O₂',x,y-12,'#7fd4ff')}}
   else if(e.k=='h2o'){pc(x,y,5,'#3a7bff');tx('H₂O',x+20,y+4,'#8fb4ff')}
   else if(e.k=='hp'){rr(x-4,y-4,8,8,'#000');rr(x-3,y-3,6,6,'#4fc3ff');rr(x-1,y-1,2,2,'#fff')}
   else if(e.k=='e'){g.fillStyle=`rgba(255,243,160,${.25+.15*Math.sin(ang*20)})`;g.fillRect(x-10,y-10,20,20);pc(x,y,4,'#fff3a0','#ffd23f');if(e.w)tl('e⁻ 막힘',x,y-14,'#ff8a8a')}
@@ -220,11 +222,11 @@ function hud(){const c=k=>E.filter(e=>e.k==k).length;
  const pn=$('pn');if(!sel)pn.style.display='none';else{const s=SL[sel],l=V[sel];pn.style.display='block';$('pt').textContent=s.n+(l?'':' (미설치)');$('pd').textContent=s.d;$('pw').textContent=(sel=='ferm'&&!V.syn)?'※ ATP 합성효소를 먼저 구매하는 게 좋을 것 같아요!':'';const b=$('pb');b.style.display=l?'none':'inline-block';b.textContent='설치 '+s.c+'코인';b.disabled=st.coin<s.c;const u=$('pu'),us=sel=='syn'&&l;u.style.display=us?'inline-block':'none';if(us){const mx=st.sl>=5,uc=SUC[st.sl-1];u.textContent=mx?'속도 최대 레벨 (Lv5)':'속도 업그레이드 Lv'+st.sl+'→'+(st.sl+1)+' · '+uc+'코인';u.disabled=mx||st.coin<uc}const dc=DC[sel]||{own:{},t:'',f:''};$('pdc').style.display=l?'block':'none';DEC.forEach((d,i)=>{const bt=$('d'+i),o=dc.own[d[0]];bt.textContent=(o&&dc[d[3]]==d[0]?'✔ ':'')+d[1]+(o?'':' '+d[2]+'코인');bt.disabled=!o&&st.coin<d[2]})}
  $('ag').textContent=A.g?'포도당 자동 투입: '+(on.g?'켬':'끔'):'포도당 자동 투입 해금 (40코인)';$('ag').disabled=!A.g&&st.coin<40;
  $('ao').textContent=A.o?'산소 자동 투입: '+(on.o?'켬':'끔'):'산소 자동 투입 해금 (30코인)';$('ao').disabled=!A.o&&st.coin<30;
- $('hud').innerHTML=[['코인',st.coin],['포도당 재고',st.glu],['포도당',c('glu')],['피루브산',c('pyr')],['NADH',c('nadh')],['FADH₂',c('fadh')],['H⁺',E.filter(e=>e.k=='hp'&&e.free).length],['O₂ 재고',Math.floor(st.o2*10)/10],['ATP 보유',st.atp]].map(a=>`<span>${a[0]} ${a[1]}</span>`).join('')}
+ $('hud').innerHTML=[['코인',st.coin],['포도당 재고',st.glu],['포도당',c('glu')],['피루브산',c('pyr')],['NADH',c('nadh')],['NAD⁺(세포질)',Math.floor(st.nad)],['FADH₂',c('fadh')],['H⁺',E.filter(e=>e.k=='hp'&&e.free).length],['O₂ 재고',Math.floor(st.o2*10)/10],['ATP 보유',st.atp]].map(a=>`<span>${a[0]} ${a[1]}</span>`).join('')}
 function loop(t){const dt=Math.min(.05,(t-last)/1000||0)*st.sp;last=t;update(dt);draw();hud();requestAnimationFrame(loop)}
 function fit(){const w=$('wrap'),s=Math.min(w.clientWidth/960,w.clientHeight/440);cv.style.width=960*s+'px';cv.style.height=440*s+'px'}
 addEventListener('resize',fit);fit();
-$('bg').onclick=()=>{if(st.sh<=0&&st.coin>=2){st.coin-=2;st.glu++}};$('bo').onclick=()=>{if(st.hyp<=0&&st.coin>=3){st.coin-=3;st.o2+=5}};
+$('bg').onclick=()=>{if(st.sh<=0&&st.coin>=2){st.coin-=2;st.glu++}};$('bo').onclick=()=>{if(st.hyp<=0&&st.coin>=3){st.coin-=3;buyO2(5,5)}};
 cv.onpointerdown=ev=>{const r=cv.getBoundingClientRect(),x=(ev.clientX-r.left)*960/r.width,y=(ev.clientY-r.top)*440/r.height;let f=null;for(const k in SL){const s=SL[k];if(Math.abs(x-s.x)<=s.w/2+6&&Math.abs(y-s.y)<=s.h/2+6)f=k}sel=f};
 $('pb').onclick=()=>{if(!sel||V[sel])return;const s=SL[sel];if(st.coin>=s.c){st.coin-=s.c;V[sel]=1;tip('i'+sel,TIP[sel]);if(sel=='ferm'&&!V.syn)say('발효 효소는 산소가 없을 때만 일해요. ATP 합성효소를 먼저 구매하는 게 좋을 것 같아요!')}};
 DEC.forEach((d,i)=>$('d'+i).onclick=()=>{if(!sel||!V[sel])return;const c=DC[sel]||(DC[sel]={own:{},t:'',f:''});if(!c.own[d[0]]){if(st.coin>=d[2]){st.coin-=d[2];c.own[d[0]]=1;c[d[3]]=d[0]}}else c[d[3]]=c[d[3]]==d[0]?'':d[0]});
