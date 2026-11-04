@@ -62,13 +62,14 @@
     { label:'CO₂', carbon:1, count:27, cls:'co2' },
     { label:'아세틸\nCoA', carbon:2, count:9, cls:'long' },
     { label:'에탄올', carbon:2, count:7 },
-    { label:'피루브산', carbon:3, count:9, cls:'long' },
+    { label:'피루브산', carbon:3, count:10, cls:'long' },
     { label:'젖산', carbon:3, count:7 },
     { label:'옥살아\n세트산', carbon:4, count:7, cls:'long' },
     { label:'포도당', carbon:6, count:3 },
-    { label:'시트르산', carbon:6, count:3, cls:'long' }
+    { label:'시트르산', carbon:6, count:2, cls:'long' }
   ];
   if(TYPES.reduce((a,t)=>a+t.count,0)!==COLS*ROWS) throw Error('분자 개수가 게임판 칸 수와 다릅니다.');
+  if(TYPES.reduce((a,t)=>a+t.count*t.carbon,0)%6!==0) throw Error('전체 탄소 수가 6의 배수가 아닙니다.');
   const board=document.getElementById('board');
   const scoreEl=document.getElementById('score');
   const timeEl=document.getElementById('time');
@@ -76,7 +77,7 @@
   const startBtn=document.getElementById('start');
   const status=document.getElementById('status');
   let cells=[], score=0, time=SECONDS, running=false, finished=false;
-  let dragging=false, activePointer=null, anchor=0, endIndex=0, selected=[], interval=null, deadline=0;
+  let dragging=false, activePointer=null, anchor=0, endIndex=0, selected=[], interval=null, deadline=0, startedAt=0;
   function newBoard(){
     const arr=[];
     TYPES.forEach((t,i)=>{for(let n=0;n<t.count;n++)arr.push(i);});
@@ -126,7 +127,7 @@
   }
   function start(){
     if(running||finished)return;
-    running=true;deadline=Date.now()+time*1000;
+    running=true;startedAt=performance.now();deadline=Date.now()+time*1000;
     startBtn.textContent='진행 중';
     clearInterval(interval);interval=setInterval(tick,100);
   }
@@ -135,7 +136,9 @@
     clearInterval(interval);finished=true;running=false;dragging=false;activePointer=null;selected=[];draw();
     const overlay=document.createElement('div');overlay.className='overlay';
     const h=document.createElement('h2');h.textContent=won?'모두 제거 성공!':'시간 종료!';
-    const p=document.createElement('p');p.textContent=`최종 점수 ${score}점`;
+    const p=document.createElement('p');
+    const elapsed=Math.min(SECONDS,(performance.now()-startedAt)/1000);
+    p.textContent=won?`최종 점수 ${score}점 · 걸린 시간 ${elapsed.toFixed(1)}초`:`최종 점수 ${score}점`;
     const b=document.createElement('button');b.className='primary';b.textContent='다시 도전하기';b.addEventListener('click',reset);
     overlay.append(h,p,b);board.parentElement.append(overlay);
     startBtn.textContent='게임 종료';status.textContent='';
@@ -143,7 +146,7 @@
   function reset(){
     clearInterval(interval);
     board.parentElement.querySelector('.overlay')?.remove();
-    cells=newBoard();score=0;time=SECONDS;running=false;finished=false;dragging=false;activePointer=null;selected=[];
+    cells=newBoard();score=0;time=SECONDS;running=false;finished=false;dragging=false;activePointer=null;selected=[];startedAt=0;
     startBtn.textContent='게임 시작';status.textContent='';draw();
   }
   board.addEventListener('pointerdown',e=>{
