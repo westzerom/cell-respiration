@@ -33,7 +33,7 @@ canvas{background:#000;image-rendering:pixelated}
 <div id="hud"></div>
 <script>
 const $=i=>document.getElementById(i),cv=$('c'),g=cv.getContext('2d'),R=Math.random;
-let E=[],st={glu:0,o2:40,atp:0,coin:150,sp:1,T:0,pros:0,ord:[],oid:0,no:5,sl:1,pk:0,sg:0,la:0,gt:0,bt:0,bm:'',sd:{},h1:0,cn:0,un:0,sh:0,hyp:0,nh:-1,fk:'젖산',fer:0,sv:0,nad:6,pend:0},gly={t:0},tca={t:0},syn={t:0,tot:0,c:0,a:0},spT=0,ang=0,last=0;
+let E=[],st={glu:0,o2:40,atp:0,coin:150,sp:1,T:0,pros:0,ord:[],oid:0,no:5,sl:1,pk:0,sg:0,la:0,gt:0,bt:0,bm:'',sd:{},h1:0,cn:0,un:0,sh:0,hyp:0,nh:-1,fk:'젖산',fer:0,sv:0,nad:12,fad:4,pend:0},gly={t:0},tca={t:0},syn={t:0,tot:0,c:0,a:0},spT=0,ang=0,last=0;
 const RC=[500,310],F='11px DotGothic16,monospace';
 const V={glyc:0,pdh:0,tca:0,c1:0,c2:0,q:0,c3:0,cc:0,c4:0,syn:0,ferm:0};let sel=null;
 const SL={
@@ -46,24 +46,25 @@ const SL={
  c3:{n:'복합체 Ⅲ',x:560,y:166,w:36,h:40,c:15,d:'전자를 전달하며 H⁺ 4개를 퍼 올려요.'},
  cc:{n:'시토크롬 c',x:620,y:166,w:22,h:26,c:10,d:'복합체 Ⅲ의 전자를 복합체 Ⅳ로 날라요.'},
  c4:{n:'복합체 Ⅳ',x:680,y:166,w:36,h:40,c:20,d:'전자를 산소에 넘겨 물을 만들고 H⁺ 2개를 퍼 올려요.'},
- ferm:{n:'발효 효소',x:150,y:335,w:70,h:54,c:30,d:'산소가 없을 때 피루브산과 NADH로 NAD⁺를 되살려 해당과정을 이어가요. ATP는 늘지 않아요.'},
+ ferm:{n:'발효 효소',x:150,y:335,w:70,h:54,c:30,d:'산소가 없거나 복합체 Ⅰ이 없어 NADH를 쓸 수 없을 때, 피루브산과 NADH로 NAD⁺를 되살려 해당과정을 이어가요. ATP는 늘지 않아요.'},
  syn:{n:'ATP 합성효소',x:820,y:190,w:44,h:88,c:25,d:'H⁺가 통로를 내려갈 때 ATP를 만들어요. 통로는 2개예요. 업그레이드하면 H⁺가 더 빨리 지나가요.'}};
 const TIP={glyc:'해당과정 효소 설치! 포도당 1개를 피루브산 2개로 쪼개요.',pdh:'피루브산이 아세틸로 바뀌며 CO₂와 NADH가 나와요.',tca:'TCA 회로는 아세틸을 돌려 NADH와 FADH₂를 잔뜩 만들어요.',c1:'복합체 Ⅰ은 NADH의 전자를 받아 H⁺를 퍼 올려요.',c2:'복합체 Ⅱ는 FADH₂의 전자를 받아요. H⁺는 펌핑하지 않아요.',q:'유비퀴논이 전자를 복합체 Ⅲ으로 날라요.',c3:'복합체 Ⅲ도 H⁺를 퍼 올려요.',cc:'시토크롬 c가 전자를 복합체 Ⅳ로 날라요.',c4:'복합체 Ⅳ에서 전자가 산소를 만나 물이 돼요.',syn:'H⁺가 합성효소를 통과해 내려갈 때 ATP가 만들어져요.',ferm:'발효 효소는 산소가 없을 때 NAD⁺를 되살려요.'};
 const DC={},DEC=[['rib','리본',25,'t'],['crown','왕관',50,'t'],['spk','반짝이',35,'t'],['blush','볼터치',30,'f'],['glass','안경',40,'f']],A={g:0,o:0},on={g:1,o:1},fm={t:0};
 function add(k,x,y,p,v,d){const e={k,x,y,p:p||[],v:v||70,d,w:0,vx:R()-.5,vy:R()-.5};E.push(e);return e}
-function H(x,n){for(let i=0;i<n;i++){const e=add('hp',x+R()*20-10,140,[],0);e.free=1}}
+function H(x,n){for(let i=0;i<n;i++){const e=add('hp',x+R()*20-10,215,[[x+R()*20-10,142+R()*6]],60,q=>{q.free=1});e.delay=i*.18}}
+function pump(x,n){H(x,n)}
 const kill=e=>e.dead=1,atpD=e=>{st.atp++;e.dead=1};
-function step(e,dt){
+function step(e,dt){if(e.delay>0){e.delay-=dt;return}
  if(e.k=='hp'&&e.free){e.x+=e.vx*40*dt+Math.sign(tgtX(e.x)-e.x)*8*dt;e.y+=e.vy*40*dt+(146-e.y)*.4*dt;if(e.x<340||e.x>895)e.vx*=-1;if(e.y<48||e.y>148)e.vy*=-1;if(R()<.05){e.vx=R()-.5;e.vy=R()-.5}return}
  if(!e.p.length)return;const t=e.p[0],dx=t[0]-e.x,dy=t[1]-e.y,dd=Math.hypot(dx,dy),s=e.v*dt;
  if(dd<=s){e.x=t[0];e.y=t[1];e.p.shift();if(!e.p.length&&e.d){const f=e.d;e.d=null;f(e)}}else{e.x+=dx/dd*s;e.y+=dy/dd*s}}
 // 해당과정: 포도당 6C -> 피루브산 3C x2
 function glyOut(){fx(130,110);for(let i=0;i<2;i++){
- if(anox()){const a=add('pyr',130,112+i*14,[[60+R()*180,195+R()*60]],55);a.cy=1;const b=add('nadh',124+i*12,98,[[60+R()*180,195+R()*60]],55);b.cy=1}else{add('pyr',130,112+i*14,[[240,130+i*10],[300,138],[345,172],[372,250]],55,pyrD);
- add('nadh',124+i*12,98,[[250,235],[360,238],[400,195],[400,178]],55,nadhD)}
+ if(nadCy()){const a=add('pyr',130,112+i*14,[[60+R()*180,195+R()*60]],55);a.cy=1;const b=add('nadh',124+i*12,98,[[60+R()*180,195+R()*60]],55);b.cy=1}else{add('pyr',130,112+i*14,[[240,130+i*10],[300,138],[345,172],[372,250]],55,pyrD);
+ add('nadh',124+i*12,98,[[250,235],[360,238],[400,195],[400,178]],55,nadhD).g=1}
  add('atp',130,100,[[250,12],[930,16]],110,atpD)}}
 // 피루브산 산화: 3C -> 2C(아세틸) + CO2
-function pyrD(e){if(!V.pdh){e.pw=1;return}e.pw=0;e.k='ace';add('co2',e.x,e.y,[[e.x,-10]],45,kill);add('nadh',e.x+10,e.y,[[400,230],[400,178]],55,nadhD);e.p=[[430,300]];e.d=a=>{a.w=1}}
+function pyrD(e){if(!V.pdh||st.nad<1||anox()){e.pw=1;return}st.nad-=1;e.pw=0;e.k='ace';add('co2',e.x,e.y,[[e.x,-10]],45,kill);add('nadh',e.x+10,e.y,[[400,230],[400,178]],55,nadhD);e.p=[[430,300]];e.d=a=>{a.w=1}}
 function tcaOut(){fx(RC[0],RC[1]);
  for(let i=0;i<2;i++)add('co2',RC[0]+i*24-12,RC[1]-40,[[RC[0]+i*30-15,-10]],45,kill);
  for(let i=0;i<3;i++)add('nadh',RC[0]-24+i*8,RC[1]-50,[[400,230],[400,178]],55,nadhD);
@@ -72,15 +73,15 @@ function tcaOut(){fx(RC[0],RC[1]);
 // 전자전달계: NADH -> 복합체 Ⅰ(H+ 4), 복합체 Ⅲ(H+ 4), 복합체 Ⅳ(H+ 2)
 const SX={syn:820},SUC=[40,70,110,160];
 function tgtX(x){let b=820,d=1e9;for(const k in SX)if(V[k]&&Math.abs(SX[k]-x)<d){d=Math.abs(SX[k]-x);b=SX[k]}return b}
-const anox=()=>st.o2<=0||st.cn>0;
-const glyBlk=()=>anox()?st.nad<2:nhc()>=10;
+const anox=()=>st.o2<=0||st.cn>0,nadCy=()=>anox()||!V.c1;
+const glyBlk=()=>st.nad<2;
 const nhc=()=>E.filter(e=>e.k=='nadh'||e.k=='fadh').length;
 const blocked=()=>E.filter(e=>e.k=='e'&&((e.w&&anox())||e.fw)).length>=2;
-function nadhD(e){e.hold=1;e.x+=R()*30-15;e.y+=R()*36}
+function nadhD(e){if(e.g&&!V.c1){e.g=0;e.cy=1;e.p=[[60+R()*180,195+R()*60]];e.v=55;tip('cyN','복합체 Ⅰ이 없어서 NADH가 세포질로 돌아왔어요. 산소 없이 NAD⁺를 되살리는 발효 효소가 필요해요!');return}e.hold=1;e.x+=R()*30-15;e.y+=R()*36}
 function fadD(e){e.hold=1;e.x+=R()*30-15;e.y+=R()*36}
 const CH=[['q',515],['c3',560],['cc',620],['c4',680]];
 function eSp(x,own){const e=add('e',x,170,[],70);e.i=0;e.o=own;eGo(e)}
-function eGo(e){if(e.i>=4){e.w=1;return}const n=CH[e.i];if(!V[n[0]]){e.fw=1;return}e.v=70*(1+.4*(V[e.o]-1)+.4*(V[n[0]]-1));e.p=[[n[1],170]];e.d=q=>{if(n[0]=='c3')H(560,4);q.i++;eGo(q)}}
+function eGo(e){if(e.i>=4){e.w=1;return}const n=CH[e.i];if(!V[n[0]]){e.fw=1;return}if(e.i==0&&e.o=='c1'&&!e.pm){e.pm=1;pump(400,4)}if(e.i==2&&!e.pm3){e.pm3=1;pump(560,4)}e.v=70*(1+.4*(V[e.o]-1)+.4*(V[n[0]]-1));e.p=[[n[1],170]];e.d=q=>{q.i++;eGo(q)}}
 const stage=()=>Math.min(3,Math.floor(st.pros/25));
 function say(m){st.bm=m;st.bt=9}
 function tip(k,m){if(st.sd[k])return;st.sd[k]=1;say(m)}
@@ -115,23 +116,23 @@ function update(dt){
  if(st.over)return;if(st.bt>0)st.bt-=dt;tip('s0','점선 칸을 눌러 시설을 설치하고, 위쪽 버튼으로 포도당을 사 넣어 보세요!');if(nhc()>=8)tip('jam','NADH가 가득 차면 NAD⁺가 모자라 반응이 멈춰요.');ang+=dt;stuckTick(dt);progTick();if(st.coin<4)tip('low','코인이 거의 없어요! 포도당(2코인)을 사 넣어 ATP를 만들고, 의뢰를 납품해 코인을 벌어요.');spT-=dt;st.T+=dt;ordTick(dt);hypTick(dt);
  if(A.g&&on.g&&st.sh<=0&&st.glu<1&&E.filter(e=>e.k=='glu'&&!e.use).length<1&&st.coin>=2){st.coin-=2;st.glu++}
  if(A.o&&on.o&&st.hyp<=0&&st.o2+st.pend<5&&st.coin>=3){st.coin-=3;buyO2(5,5)}
- if(!anox()){st.nad=6;for(const e of E)if(e.cy&&!e.use&&(e.k=='pyr'||e.k=='nadh')){e.cy=0;if(e.k=='pyr'){e.p=[[300,138],[345,172],[372,250]];e.d=pyrD}else{e.p=[[250,235],[360,238],[400,195],[400,178]];e.d=nadhD}}}
- if(V.ferm&&anox()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&e.cy&&!e.use),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=q=>{q.k='nad';fx(150,335);q.p=[[130,140]];q.d=r=>{st.nad=Math.min(6,st.nad+1);r.dead=1}};p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
+ if(!nadCy()){for(const e of E)if(e.cy&&!e.use&&(e.k=='pyr'||e.k=='nadh')){e.cy=0;if(e.k=='pyr'){e.p=[[300,138],[345,172],[372,250]];e.d=pyrD}else{e.g=1;e.p=[[250,235],[360,238],[400,195],[400,178]];e.d=nadhD}}}
+ if(V.ferm&&nadCy()){fm.t-=dt;if(fm.t<=0){const p=E.find(e=>e.k=='pyr'&&e.cy&&!e.use),n=E.find(e=>e.k=='nadh'&&e.cy&&!e.use);if(p&&n){fm.t=.7;p.use=n.use=1;[p,n].forEach(q=>{q.p=[[150,335]];q.v=90});n.d=q=>{q.k='nad';fx(150,335);q.p=[[130,140]];q.d=r=>{st.nad++;r.dead=1}};p.d=q=>{q.dead=1;fx(150,335);const lac=st.fk=='젖산';add(lac?'lac':'eth',150,335,[[150,392],[40,392],[-30,392]],60,kill);if(!lac)add('co2',160,335,[[160,-10]],45,kill);st.fer++}}}}
  if(spT<=0&&st.glu>=1&&E.filter(e=>e.k=='glu'&&!e.use).length<3){st.glu--;spT=1.5;add('glu',0,110,[[120,110]],60,e=>{e.arr=1})}
  if(gly.t>0){gly.t-=dt;if(gly.t<=0){gly.u.dead=1;glyOut()}}
- else{const u=E.find(e=>e.k=='glu'&&e.arr&&!e.use);if(u&&V.glyc&&!glyBlk()){u.use=1;gly.u=u;gly.t=1.5/V.glyc;if(anox())st.nad-=2}}
+ else{const u=E.find(e=>e.k=='glu'&&e.arr&&!e.use);if(u&&V.glyc&&!glyBlk()){u.use=1;gly.u=u;gly.t=1.5/V.glyc;st.nad-=2}}
  if(tca.t>0){tca.t-=dt;if(tca.t<=0)tcaOut()}
- else{const a=E.find(e=>e.k=='ace'&&e.w&&!e.use);if(a&&V.tca&&nhc()<6){a.use=1;a.dead=1;tca.t=2/V.tca}}
+ else{const a=E.find(e=>e.k=='ace'&&e.w&&!e.use);if(a&&V.tca&&!anox()&&st.nad>=3&&st.fad>=1){st.nad-=3;st.fad-=1;a.use=1;a.dead=1;tca.t=2/V.tca}}
  if(anox()||st.un>0){st.lk=(st.lk||0)-dt;if(st.lk<=0){st.lk=st.un>0?.25:.2;const h=E.find(e=>e.k=='hp'&&e.free);if(h)h.dead=1}}
  for(const e of E)if(e.pw&&V.pdh)pyrD(e);
  for(const e of E)if(e.fw&&V[CH[e.i][0]]){e.fw=0;eGo(e)}
- for(const e of E)if(e.hold&&!blocked()&&(e.k=='nadh'?V.c1:V.c2)){e.hold=0;e.dead=1;if(e.k=='nadh'){H(400,4);eSp(400,'c1')}else eSp(470,'c2')}
+ for(const e of E)if(e.hold&&!blocked()&&(e.k=='nadh'?V.c1:V.c2)){e.hold=0;e.dead=1;tip('nadr','NADH가 전자를 내려놓으면 NAD⁺로 돌아가 다시 쓰여요! 그래서 NAD⁺ 풀이 줄어들면 반응이 멈춰요.');if(e.k=='nadh'){eSp(400,'c1');add('nad',400,190,[[440,268]],60,q=>{st.nad++;q.dead=1})}else{eSp(470,'c2');add('fad',470,190,[[510,262]],60,q=>{st.fad++;q.dead=1})}}
  for(const e of E)if(e.k=='e'&&e.w&&!e.use&&st.o2>0&&!st.cn){st.o2-=.5;e.use=1;
-  add('o2',690,70,[[684,150]],220,o=>{o.dead=1;e.dead=1;H(680,2);add('h2o',684,150,[[740,70],[740,-10]],45,kill)})}
+  add('o2',690,70,[[684,150]],220,o=>{o.dead=1;e.dead=1;pump(680,2);add('h2o',684,150,[[740,70],[740,-10]],45,kill)})}
  for(const k in SX){if(!V[k])continue;const X=SX[k],S=syn[k]||(syn[k]={c:0,tot:0,a:0});
   if(E.filter(e=>e.chan==k).length<2){const h=E.find(e=>e.k=='hp'&&e.free&&Math.abs(e.x-X)<16&&e.y>130);
    if(h){h.free=0;h.chan=k;h.p=[[X,168],[X,214]];h.v=160*(1+.6*(st.sl-1));h.d=q=>{q.dead=1;S.tot++;S.c++;if(S.c>=4){S.c=0;fx(X,222);add('atp',X,238,[[900,250],[925,200],[930,16]],100,atpD)}}}}}
- for(const e of E)if(e.k=='fx'){e.life-=dt;if(e.life<=0)e.dead=1}
+ for(const e of E)if(e.k=='fx'||e.k=='pt'){e.life-=dt;if(e.life<=0)e.dead=1}
  for(const e of E)step(e,dt);
  E=E.filter(e=>!e.dead)}
 const BG=document.createElement('canvas');BG.width=320;BG.height=147;
@@ -171,6 +172,8 @@ function bunt(){const n=stage();if(!n)return;const C=['#ff4d6d','#ffd23f','#4fd1
 function face(t,s,k){const x=s.x,fy=['glyc','tca','pdh','ferm'].includes(k)?s.y-s.h/2+12:s.y-10,dx=Math.min(10,Math.round(s.w*.2));
  if(t=='blush'){rr(x-dx-1,fy-2,3,6,'#222');rr(x+dx-1,fy-2,3,6,'#222');rr(x-dx-8,fy+5,7,4,'rgba(255,110,160,.9)');rr(x+dx+1,fy+5,7,4,'rgba(255,110,160,.9)')}
  else{g.strokeStyle='#222';g.lineWidth=2;g.strokeRect(x-dx-5,fy-4,9,9);g.strokeRect(x+dx-4,fy-4,9,9);rr(x-dx+4,fy,2*dx-8,2,'#222')}}
+function poolDraw(){tl('NAD⁺ 풀',372,388,'#9fd8ff');for(let i=0;i<12;i++){rr(335+i*13,393,12,12,'#000');rr(336+i*13,394,10,10,i<st.nad?'#9fd8ff':'#2a3a55')}
+ tl('FAD 풀',590,388,'#ffb3c6');for(let i=0;i<4;i++){rr(559+i*13,393,12,12,'#000');rr(560+i*13,394,10,10,i<st.fad?'#ffb3c6':'#4a2a3a')}}
 function drawSlots(){
  const CC={c1:['#ff8c42','#ffb98a','#c25a1a','Ⅰ'],c2:['#ff4d6d','#ff8fa3','#b02040','Ⅱ'],c3:['#4fd1c5','#9ff0e8','#2a8f86','Ⅲ'],c4:['#b388ff','#d6bdff','#7a52c4','Ⅳ']};
  for(const k in SL){const s=SL[k],l=V[k],x=s.x,y=s.y;
@@ -188,7 +191,7 @@ function draw(){
  const EV=[['hyp','산소 부족 사태'],['cn','시안화물 습격'],['un','짝풀림제 침투'],['sh','포도당 배급 지연']].find(a=>st[a[0]]>0);
  if(EV){g.fillStyle='rgba(255,60,90,.14)';g.fillRect(0,0,960,440);rr(330,4,260,22,'#ff4d6d','#000');tx(EV[1]+'! '+Math.ceil(st[EV[0]])+'초',460,20,'#fff')}
  bunt();tl('세포질',140,430,'#8fc');tl('세포막',34,26,'#ff8fc4');
- tl('마이토콘드리아',380,52,'#ffb26b');tl('외막',905,52,'#ffb26b');tl('막 사이 공간 (H⁺가 모이면 파랗게)',560,100,'#9aa8ff');tl('내막 (크리스타)',470,262,'#ffd7a0');tl('기질',870,395,'#ffb86b');
+ tl('마이토콘드리아',380,52,'#ffb26b');tl('외막',905,52,'#ffb26b');tl('막 사이 공간',560,100,'#9aa8ff');tl('내막 (크리스타)',470,262,'#ffd7a0');tl('기질',870,395,'#ffb86b');
  
  
  
@@ -199,19 +202,20 @@ function draw(){
  for(let i=0;i<4;i++){const a=a0+i*Math.PI/2;bv(Math.round(RC[0]+Math.cos(a)*42-9),Math.round(RC[1]+Math.sin(a)*42-9),18,18,'#ff4d6d','#ff9ab0','#a02040')}
  tl('TCA 회로',RC[0],RC[1]+4,'#fff');}
  if(st.o2<=0&&blocked())tl('산소 없음! 전자전달계 정지',640,128,'#ff6b6b');
- if(V.tca&&nhc()>=6&&tca.t<=0)tl('NAD⁺ 부족: TCA 회로 정지',RC[0]-10,RC[1]+78,'#ff6b6b');
- if(V.glyc&&glyBlk()&&gly.t<=0)tl('NAD⁺ 부족: 해당과정 정지',130,160,'#ff6b6b');
+ if(V.tca&&(st.nad<3||st.fad<1)&&tca.t<=0&&E.some(e=>e.k=='ace'&&e.w))tl(st.nad>=3?'FAD 부족: TCA 회로 정지':'NAD⁺ 부족: TCA 회로 정지',RC[0]-10,RC[1]+66,'#ff6b6b');
+ if(V.glyc&&glyBlk()&&gly.t<=0&&E.some(e=>e.k=='glu'&&e.arr&&!e.use))tl('NAD⁺ 부족: 해당과정 정지',130,160,'#ff6b6b');
  if(V.glyc)spr(30,34,gly.t>0,'');if(V.tca)spr(RC[0]+62,RC[1]+8,tca.t>0,'');
- drawSlots();
- for(const e of E){const x=Math.round(e.x),y=Math.round(e.y);
+ drawSlots();poolDraw();
+ for(const e of E){const x=Math.round(e.x),y=Math.round(e.y);if(e.delay>0)continue;
   if(e.k=='glu')mol(6,x,y,'포도당 6C');else if(e.k=='pyr')mol(3,x,y,'피루브산 3C');else if(e.k=='ace')mol(2,x,y,'아세틸 2C');else if(e.k=='lac')mol(3,x,y,'젖산 3C');else if(e.k=='eth')mol(2,x,y,'에탄올 2C');
-  else if(e.k=='nad')pill(x,y,36,'#9fd8ff','NAD⁺');else if(e.k=='nadh')pill(x,y,36,'#7ae582','NADH');else if(e.k=='fadh')pill(x,y,46,'#ff9ab0','FADH₂');
+  else if(e.k=='fad')pill(x,y,30,'#ffb3c6','FAD');else if(e.k=='nad')pill(x,y,36,'#9fd8ff','NAD⁺');else if(e.k=='nadh')pill(x,y,36,'#7ae582','NADH');else if(e.k=='fadh')pill(x,y,46,'#ff9ab0','FADH₂');
   else if(e.k=='co2'){pc(x,y,5,'#aaa');tx('CO₂',x+18,y+4,'#ddd')}
   else if(e.k=='o2'){if(e.full){pc(x-6,y,4,'#7fd4ff');pc(x+6,y,4,'#7fd4ff');tl('O₂',x,y-12,'#7fd4ff')}else{pc(x,y,4,'#7fd4ff');tl('½O₂',x,y-12,'#7fd4ff')}}
   else if(e.k=='h2o'){pc(x,y,5,'#3a7bff');tx('H₂O',x+20,y+4,'#8fb4ff')}
   else if(e.k=='hp'){rr(x-4,y-4,8,8,'#000');rr(x-3,y-3,6,6,'#4fc3ff');rr(x-1,y-1,2,2,'#fff')}
-  else if(e.k=='e'){g.fillStyle=`rgba(255,243,160,${.25+.15*Math.sin(ang*20)})`;g.fillRect(x-10,y-10,20,20);pc(x,y,4,'#fff3a0','#ffd23f');if(e.w)tl('e⁻ 막힘',x,y-14,'#ff8a8a')}
+  else if(e.k=='e'){g.fillStyle=`rgba(255,243,160,${.25+.15*Math.sin(ang*20)})`;g.fillRect(x-10,y-10,20,20);pc(x,y,4,'#fff3a0','#ffd23f');tl(e.w||e.fw?'2e⁻ 막힘':'2e⁻',x,y-14,e.w||e.fw?'#ff8a8a':'#fff3a0')}
   else if(e.k=='atp')pill(x,y,26,'#ffd23f','ATP');
+  else if(e.k=='pt')tl(e.txt,x,y-Math.round((1.2-e.life)*12),'#9fe8ff');
   else if(e.k=='fx'){const z=(.5-e.life)*70;g.strokeStyle=`rgba(255,210,63,${e.life*2})`;g.lineWidth=3;g.strokeRect(x-z,y-z,2*z,2*z)}}
  bv(880,4,76,22,'#2a2000','#ffd23f','#7a5c00');tx('ATP '+st.atp,918,20,'#ffd23f')}
 function hud(){const c=k=>E.filter(e=>e.k==k).length;
@@ -222,13 +226,13 @@ function hud(){const c=k=>E.filter(e=>e.k==k).length;
  const pn=$('pn');if(!sel)pn.style.display='none';else{const s=SL[sel],l=V[sel];pn.style.display='block';$('pt').textContent=s.n+(l?'':' (미설치)');$('pd').textContent=s.d;$('pw').textContent=(sel=='ferm'&&!V.syn)?'※ ATP 합성효소를 먼저 구매하는 게 좋을 것 같아요!':'';const b=$('pb');b.style.display=l?'none':'inline-block';b.textContent='설치 '+s.c+'코인';b.disabled=st.coin<s.c;const u=$('pu'),us=sel=='syn'&&l;u.style.display=us?'inline-block':'none';if(us){const mx=st.sl>=5,uc=SUC[st.sl-1];u.textContent=mx?'속도 최대 레벨 (Lv5)':'속도 업그레이드 Lv'+st.sl+'→'+(st.sl+1)+' · '+uc+'코인';u.disabled=mx||st.coin<uc}const dc=DC[sel]||{own:{},t:'',f:''};$('pdc').style.display=l?'block':'none';DEC.forEach((d,i)=>{const bt=$('d'+i),o=dc.own[d[0]];bt.textContent=(o&&dc[d[3]]==d[0]?'✔ ':'')+d[1]+(o?'':' '+d[2]+'코인');bt.disabled=!o&&st.coin<d[2]})}
  $('ag').textContent=A.g?'포도당 자동 투입: '+(on.g?'켬':'끔'):'포도당 자동 투입 해금 (40코인)';$('ag').disabled=!A.g&&st.coin<40;
  $('ao').textContent=A.o?'산소 자동 투입: '+(on.o?'켬':'끔'):'산소 자동 투입 해금 (30코인)';$('ao').disabled=!A.o&&st.coin<30;
- $('hud').innerHTML=[['코인',st.coin],['포도당 재고',st.glu],['포도당',c('glu')],['피루브산',c('pyr')],['NADH',c('nadh')],['NAD⁺(세포질)',Math.floor(st.nad)],['FADH₂',c('fadh')],['H⁺',E.filter(e=>e.k=='hp'&&e.free).length],['O₂ 재고',Math.floor(st.o2*10)/10],['ATP 보유',st.atp]].map(a=>`<span>${a[0]} ${a[1]}</span>`).join('')}
+ $('hud').innerHTML=[['코인',st.coin],['포도당 재고',st.glu],['포도당',c('glu')],['피루브산',c('pyr')],['NADH',c('nadh')],['NAD⁺ 풀',Math.floor(st.nad)+'/12'],['FAD 풀',st.fad+'/4'],['FADH₂',c('fadh')],['H⁺',E.filter(e=>e.k=='hp'&&e.free).length],['O₂ 재고',Math.floor(st.o2*10)/10],['ATP 보유',st.atp]].map(a=>`<span>${a[0]} ${a[1]}</span>`).join('')}
 function loop(t){const dt=Math.min(.05,(t-last)/1000||0)*st.sp;last=t;update(dt);draw();hud();requestAnimationFrame(loop)}
 function fit(){const w=$('wrap'),s=Math.min(w.clientWidth/960,w.clientHeight/440);cv.style.width=960*s+'px';cv.style.height=440*s+'px'}
 addEventListener('resize',fit);fit();
 $('bg').onclick=()=>{if(st.sh<=0&&st.coin>=2){st.coin-=2;st.glu++}};$('bo').onclick=()=>{if(st.hyp<=0&&st.coin>=3){st.coin-=3;buyO2(5,5)}};
 cv.onpointerdown=ev=>{const r=cv.getBoundingClientRect(),x=(ev.clientX-r.left)*960/r.width,y=(ev.clientY-r.top)*440/r.height;let f=null;for(const k in SL){const s=SL[k];if(Math.abs(x-s.x)<=s.w/2+6&&Math.abs(y-s.y)<=s.h/2+6)f=k}sel=f};
-$('pb').onclick=()=>{if(!sel||V[sel])return;const s=SL[sel];if(st.coin>=s.c){st.coin-=s.c;V[sel]=1;tip('i'+sel,TIP[sel]);if(sel=='ferm'&&!V.syn)say('발효 효소는 산소가 없을 때만 일해요. ATP 합성효소를 먼저 구매하는 게 좋을 것 같아요!')}};
+$('pb').onclick=()=>{if(!sel||V[sel])return;const s=SL[sel];if(st.coin>=s.c){st.coin-=s.c;V[sel]=1;tip('i'+sel,TIP[sel]);if(sel=='ferm'&&!V.syn)say('발효 효소는 산소가 없거나 복합체 Ⅰ이 없을 때 일해요. ATP 합성효소를 먼저 구매하는 게 좋을 것 같아요!')}};
 DEC.forEach((d,i)=>$('d'+i).onclick=()=>{if(!sel||!V[sel])return;const c=DC[sel]||(DC[sel]={own:{},t:'',f:''});if(!c.own[d[0]]){if(st.coin>=d[2]){st.coin-=d[2];c.own[d[0]]=1;c[d[3]]=d[0]}}else c[d[3]]=c[d[3]]==d[0]?'':d[0]});
 $('ag').onclick=()=>{if(!A.g){if(st.coin>=40){st.coin-=40;A.g=1}}else on.g=!on.g};
 $('ao').onclick=()=>{if(!A.o){if(st.coin>=30){st.coin-=30;A.o=1}}else on.o=!on.o};
